@@ -1,0 +1,123 @@
+---
+title: "lobster_exploration"
+format: html
+editor: visual
+execute: 
+  warning: false
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+```{r}
+lobster <- read_csv(here("data", "Lobster_Abundance_All_Years_20210412.csv" ),
+                              na = c("-99999", "")) %>% 
+  janitor::clean_names() %>% 
+    uncount(count)
+```
+
+```{r}
+# Create a summary table that finds the total counts (see: n()), and mean carapace lengths of lobsters observed in the dataset by site and year.
+
+mean_counts <- lobster %>% 
+  group_by(site, year) %>% 
+  summarize(mean = mean(size_mm),
+            count = n())
+# Create a ggplot graph of the number of total lobsters observed (y-axis) by year (x-axis) in the study, grouped (either aesthetically or by faceting) by site
+
+ggplot(data = mean_counts, aes(x = year, y = count, color = site)) +
+  geom_point()
+  
+```
+
+```{r}
+lobster_2020 <- lobster %>% filter(year == 2020)
+```
+
+```{r}
+# Write code (you can decide how to do this - there are a number of ways) to find the counts of lobsters observed at each site (only using site as the grouping factor) that are above and below the legal limit. Hint: You may want to add a new column legal that contains “yes” or “no” based on the size of the observed lobster 
+
+lobster_2020_legal <- lobster_2020 %>%
+  group_by(site) %>%  mutate(legal = case_when( 
+  size_mm > 79.76 ~ "no",
+  size_mm <= 79.76 ~ "yes")) %>% 
+    count(legal)
+
+# Create a stacked column graph that shows the proportion of legal and non-legal lobsters at each site. **Hint: create a stacked column graph with geom_col(), then add the argument position = "fill" to convert from a graph of absolute counts to proportions.
+
+ggplot(data = lobster_2020_legal, aes(x = site, y = n, fill = legal)) +
+  geom_col(position = "fill")
+```
+
+```{r}
+# Create and store a subset that only contains lobsters from sites “IVEE”, “CARP” and “NAPL”. Check your output data frame to ensure that only those three sites exist.
+lobster_IVEE_CARP_NAPL <- lobster %>% filter(site %in% c("IVEE", "CARP", "NAPL"))
+
+```
+
+```{r}
+# Create a subset that only contains lobsters observed in August.
+lobster_august <- lobster %>% filter(month == 8)
+```
+
+```{r}
+# Create a subset with lobsters at Arroyo Quemado (AQUE) OR with a carapace length greater than 70 mm.
+lobster_AQUE <- lobster %>% filter(site == "AQUE" | size_mm > 70)
+```
+
+```{r}
+# Create a subset that does NOT include observations from Naples Reef (NAPL)
+lobster_exclude_NAPL <- lobster %>% filter(site != "NAPL")
+```
+
+```{r}
+# Find the mean and standard deviation of lobster carapace length, grouped by site.
+lobster_mean_sd <- lobster %>%
+  group_by(site) %>% 
+  summarize(mean_size = mean(size_mm,  na.rm = TRUE), sd_size = sd(size_mm, na.rm = TRUE))
+```
+
+```{r}
+# Find the maximum carapace length by site and month.
+lobster_max <- lobster %>% 
+  group_by(site, month) %>% 
+  summarize(max_size = max(size_mm, na.rm = TRUE))
+```
+
+```{r}
+# Add a new column that contains lobster carapace length converted to centimeters. Check output.
+lobster_cm <- lobster %>% 
+  mutate(size_cm = size_mm / 10)
+```
+
+```{r}
+# Update the site column to all lowercase. Check output.
+lobster_site <- lobster %>% 
+  mutate(site = tolower(site))
+```
+
+```{r}
+# Convert the area column to a character (not sure why you’d want to do this, but try it anyway). Check output.
+lobster_area_chr <- lobster %>% 
+  mutate(area = as.character(area))
+  
+```
+
+```{r}
+# Use case_when() to add a new column called size_bin that contains “small” if carapace size is <= 70 mm, or “large” if it is greater than 70 mm. Check output.
+lobster_size_bin <- lobster %>%
+  mutate(size_bin = case_when( 
+  size_mm > 70 ~ "large",
+  size_mm <= 70 ~ "small"))
+```
+
+```{r}
+#Use case_when() to add a new column called designation that contains “MPA” if the site is “IVEE” or “NAPL”, and “not MPA” for all other outcomes.
+lobster_designation <- lobster %>%
+  mutate(designation = case_when( 
+  site %in% c("IVEE", "NAPL") ~ "MPA",
+  TRUE ~ "not MPA"))
+```
